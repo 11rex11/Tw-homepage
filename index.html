@@ -90,13 +90,13 @@ body::before{
 
     box-shadow:var(--shadow);
 
-    transition:transform .5s var(--transition),
-               border-color .5s ease,
-               box-shadow .5s ease;
+    /* Smooth fallback transition for when mouse leaves */
+    transition: transform .5s var(--transition),
+                border-color .5s ease,
+                box-shadow .5s ease;
 }
 
 .glass-panel:hover{
-    transform:translateY(-4px);
     border-color:rgba(184,132,83,.18);
 
     box-shadow:
@@ -115,47 +115,77 @@ body::before{
     margin-bottom:24px;
 }
 
-.role-wrapper{
-    display:flex;
-    justify-content:center;
-    align-items:center;
+/* ===== MECHANICAL FLIP CLOCK SYSTEM ===== */
 
-    height:52px;
-    overflow:hidden;
+.role-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 64px;
+    perspective: 400px; /* Crucial for structural 3D leaf depth */
 }
 
-.role{
-    position:relative;
-    font-size:clamp(1rem,2vw,1.35rem);
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    color:var(--muted);
-
-    min-width:340px;
+.flip-clock {
+    display: inline-flex;
+    flex-direction: column;
+    position: relative;
+    height: 48px;
+    background: #0d1117;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.04);
+    overflow: visible;
 }
 
-/* Flip animation */
-.flip{
-    display:inline-block;
-    animation:flipIn .8s var(--transition);
+/* Base configuration for split panels */
+.flip-card-half {
+    font-size: clamp(0.85rem, 1.8vw, 1.15rem);
+    font-weight: 600;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--accent);
+    
+    padding: 0 28px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+    background: #0d1117;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
-@keyframes flipIn{
-    0%{
-        transform:
-            perspective(800px)
-            rotateX(-90deg)
-            translateY(-12px);
-        opacity:0;
-    }
+/* Align text properties for top segments */
+.flip-card-top {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    line-height: 48px; /* Double standard line height offsets positioning */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.45); /* Physical split boundary line */
+}
 
-    100%{
-        transform:
-            perspective(800px)
-            rotateX(0deg)
-            translateY(0);
-        opacity:1;
-    }
+/* Align text properties for bottom segments */
+.flip-card-bottom {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    line-height: 0px; /* Collapsed sizing forces standard textual alignment up */
+}
+
+/* GPU Accelerated animation properties */
+.flip-animate {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    transform-origin: bottom;
+    z-index: 3;
+}
+
+.flip-animate.top {
+    top: 0;
+    animation: flipTop 0.45s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+
+@keyframes flipTop {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(-90deg); }
 }
 
 /* Accent line */
@@ -196,17 +226,16 @@ body::before{
     }
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width:700px){
 
     .glass-panel{
         padding:50px 28px;
         border-radius:16px;
     }
-
-    .role{
-        min-width:unset;
-        letter-spacing:.12em;
+    
+    .flip-card-half {
+        padding: 0 16px;
     }
 }
 </style>
@@ -217,13 +246,14 @@ body::before{
 <canvas id="bgCanvas"></canvas>
 
 <section class="hero">
-    <div class="glass-panel">
+    <div class="glass-panel" id="panel">
 
         <h1 class="name">Triston Ward</h1>
 
         <div class="role-wrapper">
-            <div id="roleText" class="role">
-                <span class="flip">Operations Management</span>
+            <div id="flipClock" class="flip-clock">
+                <div class="flip-card-half flip-card-top">Operations Management</div>
+                <div class="flip-card-half flip-card-bottom">Operations Management</div>
             </div>
         </div>
 
@@ -263,18 +293,31 @@ const roles = [
 const roleInterval = 3000;
 
 /* ==================================
-   FLIP ROLE TEXT
+   MECHANICAL SPLIT-FLAP CLOCK ENGINE
 ================================== */
-
-const roleEl = document.getElementById("roleText");
+const clockContainer = document.getElementById("flipClock");
 let roleIndex = 0;
 
-setInterval(() => {
-    roleIndex = (roleIndex + 1) % roles.length;
+function flipToNextRole() {
+    const nextIndex = (roleIndex + 1) % roles.length;
+    const currentText = roles[roleIndex];
+    const nextText = roles[nextIndex];
 
-    roleEl.innerHTML =
-    `<span class="flip">${roles[roleIndex]}</span>`;
-}, roleInterval);
+    // Reconstruct domestic component arrays on edge trigger cycles
+    clockContainer.innerHTML = `
+        <div class="flip-card-half flip-card-top">${nextText}</div>
+        <div class="flip-card-half flip-card-bottom">${nextText}</div>
+        
+        <div class="flip-card-half flip-card-bottom" style="position:absolute; bottom:0; z-index:1;">${currentText}</div>
+        
+        <div class="flip-card-half flip-card-top flip-animate top">${currentText}</div>
+    `;
+
+    roleIndex = nextIndex;
+}
+
+// Fire continuous loop intervals
+setInterval(flipToNextRole, roleInterval);
 
 /* ==================================
    CANVAS SYSTEM VISUALIZATION
@@ -287,12 +330,32 @@ let w, h;
 let particles = [];
 let gears = [];
 
+function initSystems(){
+    particles = [];
+    gears = [];
+    
+    for(let i=0;i<95;i++){
+        particles.push(new Particle());
+    }
+
+    for(let i=0;i<8;i++){
+        gears.push(
+            new Gear(
+                Math.random()*w,
+                Math.random()*h,
+                60 + Math.random()*90,
+                14 + Math.floor(Math.random()*10),
+                (Math.random()-.5)*0.002
+            )
+        );
+    }
+}
+
 function resize(){
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
+    initSystems(); 
 }
-resize();
-window.addEventListener("resize", resize);
 
 /* PARTICLES */
 
@@ -332,7 +395,7 @@ class Particle{
     }
 }
 
-/* GEAR-LIKE SYSTEM NODES */
+/* GEAR SYSTEMS */
 
 class Gear{
     constructor(x,y,r,teeth,speed){
@@ -349,30 +412,19 @@ class Gear{
     }
 
     draw(){
-
         ctx.save();
         ctx.translate(this.x,this.y);
         ctx.rotate(this.angle);
 
-        ctx.strokeStyle =
-            "rgba(255,255,255,.035)";
+        ctx.strokeStyle = "rgba(255,255,255,.035)";
         ctx.lineWidth = 1;
 
         for(let i=0;i<this.teeth;i++){
-            const a =
-                (Math.PI*2/this.teeth)*i;
-
-            const x1 =
-                Math.cos(a)*(this.r);
-
-            const y1 =
-                Math.sin(a)*(this.r);
-
-            const x2 =
-                Math.cos(a)*(this.r+8);
-
-            const y2 =
-                Math.sin(a)*(this.r+8);
+            const a = (Math.PI*2/this.teeth)*i;
+            const x1 = Math.cos(a)*(this.r);
+            const y1 = Math.sin(a)*(this.r);
+            const x2 = Math.cos(a)*(this.r+8);
+            const y2 = Math.sin(a)*(this.r+8);
 
             ctx.beginPath();
             ctx.moveTo(x1,y1);
@@ -392,61 +444,24 @@ class Gear{
     }
 }
 
-/* INIT */
+// Initialize viewport allocations
+resize();
+window.addEventListener("resize", resize);
 
-for(let i=0;i<95;i++){
-    particles.push(new Particle());
-}
-
-for(let i=0;i<8;i++){
-    gears.push(
-        new Gear(
-            Math.random()*w,
-            Math.random()*h,
-            60 + Math.random()*90,
-            14 + Math.floor(Math.random()*10),
-            (Math.random()-.5)*0.002
-        )
-    );
-}
-
-/* ANIMATION */
+/* ANIMATION RENDERING HARNESS */
 
 function connectParticles(){
-
     for(let a=0;a<particles.length;a++){
-
         for(let b=a;b<particles.length;b++){
-
-            const dx =
-                particles[a].x -
-                particles[b].x;
-
-            const dy =
-                particles[a].y -
-                particles[b].y;
-
-            const dist =
-                Math.sqrt(dx*dx + dy*dy);
+            const dx = particles[a].x - particles[b].x;
+            const dy = particles[a].y - particles[b].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
 
             if(dist < 140){
-
                 ctx.beginPath();
-
-                ctx.strokeStyle =
-                `rgba(184,132,83,
-                ${0.06 - dist/2400})`;
-
-                ctx.moveTo(
-                    particles[a].x,
-                    particles[a].y
-                );
-
-                ctx.lineTo(
-                    particles[b].x,
-                    particles[b].y
-                );
-
+                ctx.strokeStyle = `rgba(184,132,83,${0.06 - dist/2400})`;
+                ctx.moveTo(particles[a].x, particles[a].y);
+                ctx.lineTo(particles[b].x, particles[b].y);
                 ctx.stroke();
             }
         }
@@ -454,7 +469,6 @@ function connectParticles(){
 }
 
 function animate(){
-
     ctx.clearRect(0,0,w,h);
 
     gears.forEach(g=>{
@@ -468,25 +482,28 @@ function animate(){
     });
 
     connectParticles();
-
     requestAnimationFrame(animate);
 }
-
 animate();
 
-/* SUBTLE PARALLAX */
+/* PARALLAX (RECONCILED MATRIX EFFECT) */
+
+const panel = document.getElementById("panel");
+let isHovered = false;
+
+panel.addEventListener("mouseenter", () => isHovered = true);
+panel.addEventListener("mouseleave", () => {
+    isHovered = false;
+    panel.style.transform = `translate(0px, 0px)`;
+});
 
 document.addEventListener("mousemove", e => {
-
-    const x =
-    (e.clientX / w - .5) * 8;
-
-    const y =
-    (e.clientY / h - .5) * 8;
-
-    document.querySelector(".glass-panel")
-        .style.transform =
-        `translate(${x}px, ${y}px)`;
+    if (window.innerWidth > 700) {
+        const x = (e.clientX / w - .5) * 8;
+        const y = (e.clientY / h - .5) * 8;
+        const lift = isHovered ? -4 : 0;
+        panel.style.transform = `translate(${x}px, ${y + lift}px)`;
+    }
 });
 </script>
 
