@@ -55,6 +55,8 @@ body::before{
 .accent-line{ width:140px; height:1px; margin:40px auto 0; background: linear-gradient(90deg, transparent, rgba(184,132,83,.8), transparent); position:relative; overflow:hidden; }
 .accent-line::after{ content:""; position:absolute; top:0; left:-30%; width:30%; height:100%; background:rgba(255,255,255,.8); filter:blur(3px); animation:sweep 5s infinite linear; }
 @keyframes sweep{ to { left:130%; } }
+.contact-terminal { margin-top: 30px; opacity: 0.6; transition: all 0.3s ease; }
+.contact-terminal:hover { opacity: 1; cursor: pointer; text-shadow: 0 0 10px var(--accent); }
 </style>
 </head>
 <body>
@@ -66,6 +68,9 @@ body::before{
             <div id="roleRow" class="split-flap-row"></div>
         </div>
         <div class="accent-line"></div>
+        <div class="contact-terminal">
+            <span id="pingTrigger" style="font-family: monospace; font-size: 0.8rem; letter-spacing: 2px;">> PING TRISTON</span>
+        </div>
     </div>
 </section>
 <script>
@@ -74,6 +79,7 @@ const MY_NAME_TARGET = " TRISTON WARD ";
 const nameSlotsCount = 14; const roleSlotsCount = 26; 
 const nameRow = document.getElementById("nameRow"), roleRow = document.getElementById("roleRow");
 let currentNameArray = Array(nameSlotsCount).fill(" "), currentRoleArray = Array(roleSlotsCount).fill(" "), randomizedPlaylist = [], currentPlaylistIndex = 0;
+
 function buildPhysicalMatrix(row, count) {
     row.innerHTML = "";
     for (let i = 0; i < count; i++) {
@@ -83,6 +89,7 @@ function buildPhysicalMatrix(row, count) {
     }
 }
 buildPhysicalMatrix(nameRow, nameSlotsCount); buildPhysicalMatrix(roleRow, roleSlotsCount);
+
 function flipRowToTarget(rowId, targetString, currentArr, limit) {
     for (let i = 0; i < limit; i++) {
         let next = targetString[i], prev = currentArr[i];
@@ -98,6 +105,7 @@ function flipRowToTarget(rowId, targetString, currentArr, limit) {
         }
     }
 }
+
 function executeMasterSequence() {
     flipRowToTarget("nameRow", " ".repeat(nameSlotsCount), currentNameArray, nameSlotsCount);
     flipRowToTarget("roleRow", " ".repeat(roleSlotsCount), currentRoleArray, roleSlotsCount);
@@ -109,6 +117,17 @@ function executeMasterSequence() {
     }, 1800);
 }
 executeMasterSequence(); setInterval(executeMasterSequence, 6000);
+
+document.getElementById('pingTrigger').addEventListener('click', (e) => {
+    const el = e.target;
+    el.textContent = "> PONG";
+    setTimeout(() => {
+        const pA = "triston"; const pB = "ward"; const domain = "gmail.com";
+        window.location.href = `mailto:${pA}.${pB}@${domain}?subject=Inquiry_From_Hub`;
+        setTimeout(() => el.textContent = "> PING TRISTON", 1000);
+    }, 300);
+});
+
 const canvas = document.getElementById("bgCanvas"), ctx = canvas.getContext("2d");
 let w, h, circuitTraces = [], cornerRadius = 12;
 class CircuitTrace {
@@ -134,7 +153,6 @@ class CircuitTrace {
     render(mult) {
         ctx.beginPath(); ctx.lineWidth=this.isMainTrunk?2.4:1.2; ctx.strokeStyle=this.isMainTrunk?"rgba(255,255,255,.05)":"rgba(255,255,255,.02)";
         this.computedPath.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y)); ctx.stroke();
-        // TERMINAL CIRCLES
         ctx.strokeStyle = this.isMainTrunk ? "rgba(184,132,83,.45)" : "rgba(255,255,255,.08)";
         ctx.beginPath(); ctx.arc(this.computedPath[0].x, this.computedPath[0].y, this.isMainTrunk?5:3, 0, Math.PI*2); ctx.stroke();
         this.packets.forEach(p => {
@@ -163,4 +181,3 @@ anim();
 </script>
 </body>
 </html>
-
