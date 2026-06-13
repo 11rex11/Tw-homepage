@@ -122,7 +122,7 @@ document.getElementById('pingTrigger').addEventListener('click', (e) => {
     const el = e.target;
     el.textContent = "> PONG";
     setTimeout(() => {
-        const pA = "triston"; const pB = "ward"; const domain = "gmail.com";
+        const pA = "ward"; const pB = "triston"; const domain = "gmail.com";
         window.location.href = `mailto:${pA}.${pB}@${domain}?subject=Inquiry_From_Hub`;
         setTimeout(() => el.textContent = "> PING TRISTON", 1000);
     }, 2000);
