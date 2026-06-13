@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<link rel="icon" type="image/x-icon" href="favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Triston Ward</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 
 <style>
 :root{
@@ -34,6 +34,589 @@ html,body{
     overflow:hidden;
     background:var(--bg);
     color:var(--text);
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== BACKGROUND CANVAS ===== */
+#bgCanvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+    radial-gradient(circle at 25% 25%, rgba(184,132,83,.15), transparent 45%),
+    radial-gradient(circle at 75% 75%, rgba(184,132,83,.12), transparent 45%),
+    radial-gradient(circle at center, rgba(255,255,255,.02), transparent 60%);
+    pointer-events:none;
+    z-index:1;
+}
+
+/* ===== HERO CONTAINER ===== */
+.hero{
+    position:relative;
+    z-index:2;
+    width:100%;
+    height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px;
+}
+
+.glass-panel{
+    position:relative;
+    width: min(96vw, 1150px);
+    text-align:center;
+    padding:65px 24px;
+    border-radius:32px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow:var(--shadow);
+    transition: transform .5s var(--transition), border-color .5s ease, box-shadow .5s ease;
+}
+
+.glass-panel:hover{
+    border-color:rgba(184,132,83,.25);
+    box-shadow: 0 40px 90px rgba(0,0,0,.65), 0 0 50px rgba(184,132,83,.12);
+}
+
+/* ===== MECHANICAL MATRIX STACK ===== */
+.matrix-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 28px; 
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.split-flap-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+}
+
+#nameRow { gap: 4px; }
+#roleRow { gap: 3px; } 
+
+.flap-tick {
+    position: relative;
+    background: #090c10;
+    perspective: 200px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.card-segment {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    background: #0d1117; 
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    text-align: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ===== TOP NAME MATRIX CONFIG ===== */
+#nameRow .flap-tick {
+    width: clamp(16px, 3.2vw, 44px); 
+    height: clamp(40px, 7.5vw, 96px); 
+    border-radius: 6px;
+}
+
+#nameRow .card-segment {
+    color: var(--text);
+    font-size: clamp(1.4rem, 4.5vw, 3.2rem); 
+    font-weight: 800;
+    text-shadow: 0 0 16px rgba(255,255,255,.2);
+}
+
+#nameRow .card-top { top: 0; line-height: clamp(40px, 7.5vw, 96px); border-bottom: 2px solid rgba(0,0,0,0.85); }
+#nameRow .card-bottom { bottom: 0; line-height: 0px; }
+
+/* ===== BOTTOM MECHANICAL ROLE MATRIX ===== */
+#roleRow .flap-tick {
+    width: clamp(8px, 2.3vw, 26px);
+    height: clamp(20px, 5.2vw, 62px);
+    border-radius: 4px;
+}
+
+#roleRow .card-segment {
+    color: var(--accent);
+    font-size: clamp(0.7rem, 2.7vw, 2rem);
+    font-weight: 700;
+}
+
+#roleRow .card-top { top: 0; line-height: clamp(20px, 5.2vw, 62px); border-bottom: 1.5px solid rgba(0,0,0,0.8); }
+#roleRow .card-bottom { bottom: 0; line-height: 0px; }
+
+.flap-hinge {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    transform-style: preserve-3d;
+    z-index: 3;
+    top: 0;
+    transform-origin: bottom;
+}
+
+.flap-hinge.top { transform-origin: bottom; }
+.flap-hinge.animate { animation: flipTopCard 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+@keyframes flipTopCard {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(-180deg); }
+}
+
+.accent-line{
+    width:140px;
+    height:1px;
+    margin:40px auto 0;
+    background: linear-gradient(90deg, transparent, rgba(184,132,83,.8), transparent);
+    position:relative;
+    overflow:hidden;
+}
+
+.accent-line::after{
+    content:"";
+    position:absolute;
+    top:0;
+    left:-30%;
+    width:30%;
+    height:100%;
+    background:rgba(255,255,255,.8);
+    filter:blur(3px);
+    animation:sweep 5s infinite linear;
+}
+
+@keyframes sweep{ to { left:130%; } }
+
+@media (max-width:700px) {
+    .glass-panel{ padding:45px 12px; border-radius:24px; }
+    #roleRow { gap: 1.5px; } 
+    .matrix-stack { gap: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<section class="hero">
+    <div class="glass-panel" id="panel">
+        <div class="matrix-stack">
+            <div id="nameRow" class="split-flap-row"></div>
+            <div id="roleRow" class="split-flap-row"></div>
+        </div>
+        <div class="accent-line"></div>
+    </div>
+</section>
+
+<script>
+const baseRoles = [
+    "OPERATIONS MANAGEMENT", "SYSTEMS ORCHESTRATION", "OPERATIONAL ARCHITECTURE",
+    "ORGANIZATIONAL ENGINEERING", "TECHNICAL OPERATIONS", "SYSTEMS INTEGRATION",
+    "PROCESS OPTIMIZATION", "PRODUCTION LOGISTICS", "OPERATIONAL INTELLIGENCE",
+    "STRATEGIC EXECUTION", "SYSTEMS LEADERSHIP", "WORKFLOW ENGINEERING",
+    "COMPLEXITY MANAGEMENT", "EXECUTIVE OPERATIONS", "INFRASTRUCTURE STRATEGY",
+    "EXECUTION MANAGEMENT", "STRUCTURAL OPTIMIZATION", "OPERATIONAL ARCHITECT",
+    "SYSTEMS ORCHESTRATOR", "WORKFLOW WIZARD", "FRICTION ELIMINATOR",
+    "PRODUCTION MAESTRO", "TECHNICAL DIRECTOR", "BACKSTAGE COMMANDER",
+    "LIGHTING DESIGNER", "AUDIO ENGINEER", "DIRECTOR OF SPOTLIGHT",
+    "THE LOGISTICS CONDUCTOR", "THE BACKSTAGE CATALYST", "CHIEF MATRIX FIXER",
+    "DIRECTOR OF MAGIC", "CHIEF FLOW OFFICER", "PROCESS NAVIGATOR",
+    "THE STRUCTURAL CATALYST", "PACKET ROUTING ENGINE", "HIGH AVAILABILITY CHIEF",
+    "FAILOVER ARCHITECT", "BANDWIDTH OPTIMIZER", "LATENCY ELIMINATOR",
+    "ROOT ACCESS DIRECTOR", "LOAD BALANCING MAESTRO", "PROTOCOLS ORCHESTRATOR",
+    "CENTRAL PROCESSING BOSS", "BACKBONE INFRASTRUCTURE", "PIPELINE ARCHITECT",
+    "THROUGHPUT MAXIMIZER", "REDUNDANCY SUPERVISOR", "DEPLOYMENT MAESTRO"
+];
+
+const MY_NAME_TARGET = " TRISTON WARD "; 
+const nameSlotsCount = 14;
+const roleSlotsCount = 26; 
+
+const cycleInterval = 6000; 
+const rippleDelay = 30;    
+
+const nameRow = document.getElementById("nameRow");
+const roleRow = document.getElementById("roleRow");
+const panelElement = document.getElementById("panel");
+
+let currentNameArray = Array(nameSlotsCount).fill(" ");
+let currentRoleArray = Array(roleSlotsCount).fill(" ");
+
+let randomizedPlaylist = [];
+let currentPlaylistIndex = 0;
+
+function buildPhysicalMatrix(rowElement, count) {
+    rowElement.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+        const slot = document.createElement("div");
+        slot.className = "flap-tick";
+        slot.id = `${rowElement.id}-slot-${i}`;
+        slot.innerHTML = `
+            <div class="card-segment card-top">&nbsp;</div>
+            <div class="card-segment card-bottom">&nbsp;</div>
+        `;
+        rowElement.appendChild(slot);
+    }
+}
+
+buildPhysicalMatrix(nameRow, nameSlotsCount);
+buildPhysicalMatrix(roleRow, roleSlotsCount);
+
+function generateRandomPlaylist() {
+    const arr = [...baseRoles];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function formatString(text, budget) {
+    let raw = text.toUpperCase();
+    if(raw.length > budget) raw = raw.substring(0, budget);
+    const padLeft = Math.floor((budget - raw.length) / 2);
+    return (" ".repeat(padLeft) + raw).padEnd(budget, " ");
+}
+
+function flipRowToTarget(rowId, targetString, currentTrackingArray, limitCount) {
+    for (let i = 0; i < limitCount; i++) {
+        const nextChar = targetString[i];
+        const prevChar = currentTrackingArray[i];
+
+        if (prevChar !== nextChar) {
+            setTimeout(() => {
+                const slot = document.getElementById(`${rowId}-slot-${i}`);
+                if (!slot) return;
+
+                const displayNew = nextChar === " " ? "&nbsp;" : nextChar;
+                const displayOld = prevChar === " " ? "&nbsp;" : prevChar;
+
+                slot.innerHTML = `
+                    <div class="card-segment card-top">${displayNew}</div>
+                    <div class="card-segment card-bottom">${displayOld}</div>
+                    <div class="flap-hinge top animate">
+                        <div class="card-segment card-top">${displayOld}</div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    slot.innerHTML = `
+                        <div class="card-segment card-top">${displayNew}</div>
+                        <div class="card-segment card-bottom">${displayNew}</div>
+                    `;
+                }, 200);
+
+            }, i * rippleDelay);
+
+            currentTrackingArray[i] = nextChar;
+        }
+    }
+}
+
+function executeMasterSequence() {
+    if (document.hidden) return;
+
+    flipRowToTarget("nameRow", " ".repeat(nameSlotsCount), currentNameArray, nameSlotsCount);
+    flipRowToTarget("roleRow", " ".repeat(roleSlotsCount), currentRoleArray, roleSlotsCount);
+
+    setTimeout(() => {
+        flipRowToTarget("nameRow", MY_NAME_TARGET, currentNameArray, nameSlotsCount);
+    }, 900);
+
+    setTimeout(() => {
+        if (randomizedPlaylist.length === 0 || currentPlaylistIndex >= randomizedPlaylist.length) {
+            randomizedPlaylist = generateRandomPlaylist();
+            currentPlaylistIndex = 0;
+        }
+        const nextRole = randomizedPlaylist[currentPlaylistIndex];
+        currentPlaylistIndex++;
+
+        flipRowToTarget("roleRow", formatString(nextRole, roleSlotsCount), currentRoleArray, roleSlotsCount);
+    }, 1800);
+}
+
+executeMasterSequence();
+let sequenceTimer = setInterval(executeMasterSequence, cycleInterval);
+
+/* ==========================================================================
+   V24 FILLETED CORNER PACKET TRACKING ENGINE (No Corner Cutting)
+   ========================================================================== */
+const canvas = document.getElementById("bgCanvas");
+const ctx = canvas.getContext("2d");
+let w, h, circuitTraces = [];
+let cornerRadius = 12;
+
+class CircuitTrace {
+    constructor(points, isMainTrunk = false) {
+        this.rawPoints = points;
+        this.isMainTrunk = isMainTrunk;
+        this.terminalRadius = isMainTrunk ? 5 : 3;
+        this.computedPath = []; 
+        
+        this.bakeSmoothPath();
+
+        this.packets = [];
+        const packetCount = isMainTrunk ? 2 : 1;
+        for(let i=0; i < packetCount; i++) {
+            this.packets.push({
+                progress: Math.random(),
+                baseSpeed: (isMainTrunk ? 0.0024 : 0.0015) + Math.random() * 0.0006,
+                speed: 0.002,
+                size: isMainTrunk ? 2.8 : 1.5,
+                alpha: 0.25 + Math.random() * 0.3
+            });
+        }
+    }
+
+    bakeSmoothPath() {
+        if (this.rawPoints.length < 2) return;
+        
+        this.computedPath.push(this.rawPoints[0]);
+        const r = cornerRadius;
+
+        for (let i = 1; i < this.rawPoints.length - 1; i++) {
+            const p0 = this.rawPoints[i - 1];
+            const p1 = this.rawPoints[i];
+            const p2 = this.rawPoints[i + 1];
+
+            let d1x = p1.x - p0.x, d1y = p1.y - p0.y;
+            let d2x = p2.x - p1.x, d2y = p2.y - p1.y;
+            
+            let len1 = Math.sqrt(d1x*d1x + d1y*d1y);
+            let len2 = Math.sqrt(d2x*d2x + d2y*d2y);
+
+            let n1x = d1x / len1, n1y = d1y / len1;
+            let n2x = d2x / len2, n2y = d2y / len2;
+
+            let currentRadius = Math.min(r, len1 / 2, len2 / 2);
+
+            let t1 = { x: p1.x - n1x * currentRadius, y: p1.y - n1y * currentRadius };
+            let t2 = { x: p1.x + n2x * currentRadius, y: p1.y + n2y * currentRadius };
+
+            this.computedPath.push(t1);
+
+            const steps = 8;
+            for (let s = 1; s < steps; s++) {
+                let t = s / steps;
+                let cx = (1-t)*(1-t)*t1.x + 2*(1-t)*t*p1.x + t*t*t2.x;
+                let cy = (1-t)*(1-t)*t1.y + 2*(1-t)*t*p1.y + t*t*t2.y;
+                this.computedPath.push({ x: cx, y: cy });
+            }
+            this.computedPath.push(t2);
+        }
+        this.computedPath.push(this.rawPoints[this.rawPoints.length - 1]);
+    }
+
+    getPointAtProgress(p) {
+        if (this.computedPath.length < 2) return {x: 0, y: 0};
+        const totalSegments = this.computedPath.length - 1;
+        const targetSeg = Math.min(Math.floor(p * totalSegments), totalSegments - 1);
+        const segProgress = (p * totalSegments) - targetSeg;
+        
+        const p1 = this.computedPath[targetSeg];
+        const p2 = this.computedPath[targetSeg + 1];
+        
+        return {
+            x: p1.x + (p2.x - p1.x) * segProgress,
+            y: p1.y + (p2.y - p1.y) * segProgress
+        };
+    }
+
+    render(speedMult) {
+        ctx.lineWidth = this.isMainTrunk ? 2.4 : 1.2;
+        ctx.strokeStyle = this.isMainTrunk ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.02)";
+        
+        ctx.beginPath();
+        if (this.computedPath.length > 0) {
+            ctx.moveTo(this.computedPath[0].x, this.computedPath[0].y);
+            for(let i = 1; i < this.computedPath.length; i++) {
+                ctx.lineTo(this.computedPath[i].x, this.computedPath[i].y);
+            }
+        }
+        ctx.stroke();
+
+        const outerOrigin = this.computedPath[0];
+        ctx.lineWidth = 1.0;
+        ctx.strokeStyle = this.isMainTrunk ? "rgba(184, 132, 83, 0.45)" : "rgba(255, 255, 255, 0.08)";
+        ctx.beginPath();
+        ctx.arc(outerOrigin.x, outerOrigin.y, this.terminalRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        this.packets.forEach(pkt => {
+            pkt.speed += (pkt.baseSpeed * speedMult - pkt.speed) * 0.05;
+            pkt.progress += pkt.speed;
+            if(pkt.progress > 1) pkt.progress = 0;
+
+            let head = this.getPointAtProgress(pkt.progress);
+            let trailSteps = 6;
+            ctx.lineWidth = pkt.size;
+            
+            for(let s = 0; s < trailSteps; s++) {
+                let stepProgress = pkt.progress - (s * 0.008);
+                if(stepProgress < 0) continue;
+                
+                let tail = this.getPointAtProgress(stepProgress);
+                let stepAlpha = pkt.alpha * (1 - (s / trailSteps));
+                
+                ctx.strokeStyle = `rgba(184, 132, 83, ${stepAlpha})`;
+                ctx.beginPath();
+                if(s === 0) {
+                    ctx.moveTo(head.x, head.y);
+                } else {
+                    let prev = this.getPointAtProgress(pkt.progress - ((s-1) * 0.008));
+                    ctx.moveTo(prev.x, prev.y);
+                }
+                ctx.lineTo(tail.x, tail.y);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = `rgba(184, 132, 83, ${pkt.alpha * 1.6})`;
+            ctx.beginPath();
+            ctx.arc(head.x, head.y, pkt.size * 1.1, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+function initCentralHubInfrastructure() {
+    circuitTraces = [];
+    const nameBox = nameRow.getBoundingClientRect();
+    const isMobile = w < 700;
+    const traceCount = isMobile ? 24 : 44;
+    
+    cornerRadius = isMobile ? 8 : 12; 
+    const screenPad = isMobile ? 25 : 60;
+
+    const nameCenterX = (nameBox.left + nameBox.width / 2) | 0;
+    const hubY = (nameBox.bottom + 14) | 0; 
+    const hubWidth = isMobile ? 100 : 220; 
+
+    for (let i = 0; i < traceCount; i++) {
+        let edge = i % 4;
+        let startX, startY;
+        let pct = (Math.floor(i / 4) + 0.5) / (traceCount / 4);
+
+        if (edge === 0) { startX = (screenPad + (w - screenPad * 2) * pct) | 0; startY = screenPad; } 
+        else if (edge === 1) { startX = w - screenPad; startY = (screenPad + (h - screenPad * 2) * pct) | 0; } 
+        else if (edge === 2) { startX = (screenPad + (w - screenPad * 2) * pct) | 0; startY = h - screenPad; } 
+        else { startX = screenPad; startY = (screenPad + (h - screenPad * 2) * pct) | 0; }
+
+        let endTargetX = (nameCenterX - (hubWidth / 2) + (hubWidth * pct)) | 0;
+        let endTargetY = hubY;
+
+        let pathPoints = [{x: startX, y: startY}];
+
+        if (edge === 0 || edge === 2) {
+            let midY1 = (startY + (endTargetY - startY) * 0.45) | 0;
+            let midY2 = (startY + (endTargetY - startY) * 0.80) | 0;
+            let midX = (startX + (endTargetX - startX) * 0.65) | 0;
+
+            pathPoints.push({ x: startX, y: midY1 });
+            pathPoints.push({ x: midX, y: midY1 });
+            pathPoints.push({ x: midX, y: midY2 });
+            pathPoints.push({ x: endTargetX, y: midY2 });
+        } else {
+            let midX1 = (startX + (endTargetX - startX) * 0.45) | 0;
+            let midX2 = (startX + (endTargetX - startX) * 0.80) | 0;
+            let midY = (startY + (endTargetY - startY) * 0.55) | 0;
+
+            pathPoints.push({ x: midX1, y: startY });
+            pathPoints.push({ x: midX1, y: midY });
+            pathPoints.push({ x: midX2, y: midY });
+            pathPoints.push({ x: midX2, y: endTargetY });
+        }
+
+        pathPoints.push({x: endTargetX, y: endTargetY});
+
+        let isPrimaryTrunk = (i % 5 === 0);
+        circuitTraces.push(new CircuitTrace(pathPoints, isPrimaryTrunk));
+    }
+}
+
+let resizeDebounceTimer;
+function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    
+    clearInterval(sequenceTimer);
+    buildPhysicalMatrix(nameRow, nameSlotsCount);
+    buildPhysicalMatrix(roleRow, roleSlotsCount);
+    executeMasterSequence();
+    sequenceTimer = setInterval(executeMasterSequence, cycleInterval);
+    
+    requestAnimationFrame(() => {
+        initCentralHubInfrastructure();
+    });
+}
+
+window.addEventListener("resize", () => {
+    clearTimeout(resizeDebounceTimer);
+    resizeDebounceTimer = setTimeout(resize, 150);
+});
+w = canvas.width = window.innerWidth;
+h = canvas.height = window.innerHeight;
+
+requestAnimationFrame(() => { resize(); });
+
+let lastInputX = 0, lastInputY = 0, speedMultiplier = 1;
+function processKineticInput(clientX, clientY) {
+    let dx = clientX - lastInputX;
+    let dy = clientY - lastInputY;
+    let delta = Math.sqrt(dx * dx + dy * dy);
+    speedMultiplier = Math.min(5, 1 + delta * 0.025);
+    lastInputX = clientX;
+    lastInputY = clientY;
+}
+
+document.addEventListener("mousemove", (e) => processKineticInput(e.clientX, e.clientY));
+document.addEventListener("touchstart", (e) => {
+    if(e.touches.length > 0) {
+        lastInputX = e.touches[0].clientX;
+        lastInputY = e.touches[0].clientY;
+    }
+}, {passive: true});
+document.addEventListener("touchmove", (e) => {
+    if(e.touches.length > 0) {
+        processKineticInput(e.touches[0].clientX, e.touches[0].clientY);
+    }
+}, {passive: true});
+
+function animateCircuitNetwork() {
+    ctx.clearRect(0, 0, w, h);
+    speedMultiplier += (1 - speedMultiplier) * 0.035;
+    circuitTraces.forEach(trace => trace.render(speedMultiplier));
+    requestAnimationFrame(animateCircuitNetwork);
+}
+animateCircuitNetwork();
+
+document.addEventListener("mousemove", e => {
+    if (window.innerWidth > 700) {
+        const x = (e.clientX / w - .5) * 8;
+        const y = (e.clientY / h - .5) * 8;
+        panelElement.style.transform = `translate(${x}px, ${y}px)`;
+    }
+});
+</script>
+
+</body>
+</html>
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
