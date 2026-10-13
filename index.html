@@ -80,10 +80,24 @@ body::before{
  #roleRow .card-segment { font-size:clamp(0.5rem,2.9vw,1.2rem); }
 }
 @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+.contact-terminal { position:relative; }
+#sonarFx { position:fixed; inset:0; overflow:hidden; z-index:3; pointer-events:none; }
+.sonar-ring { position:absolute; left:var(--sonar-x,50vw); top:var(--sonar-y,60vh); width:var(--sonar-size,180vmax); height:var(--sonar-size,180vmax); margin-left:calc(var(--sonar-size,180vmax)/-2); margin-top:calc(var(--sonar-size,180vmax)/-2); border-radius:50%; opacity:0;
+ background:radial-gradient(circle,transparent 57%,rgba(184,132,83,.025) 60%,rgba(208,161,113,.11) 63%,rgba(229,184,139,.38) 65%,rgba(184,132,83,.10) 68%,transparent 73%);
+ mask-image:conic-gradient(from -110deg,transparent 0deg,rgba(0,0,0,.1) 15deg,#000 45deg,#000 145deg,rgba(0,0,0,.1) 175deg,transparent 190deg,transparent 360deg);
+ -webkit-mask-image:conic-gradient(from -110deg,transparent 0deg,rgba(0,0,0,.1) 15deg,#000 45deg,#000 145deg,rgba(0,0,0,.1) 175deg,transparent 190deg,transparent 360deg);
+ animation:wideSonar 3200ms cubic-bezier(.32,.08,.24,1) both; animation-delay:calc(var(--i)*140ms); will-change:transform,opacity; }
+#sonarFx[data-mode=pong] .sonar-ring { animation-name:wideSonarReturn; animation-duration:3500ms; animation-delay:calc(var(--i)*140ms); background:radial-gradient(circle,transparent 58%,rgba(214,175,137,.025) 60%,rgba(233,196,158,.14) 63%,rgba(239,205,173,.35) 65%,rgba(205,160,114,.08) 69%,transparent 73%); }
+@keyframes wideSonar { 0% { transform:scale(.025) rotate(calc(var(--i)*90deg - 35deg)); opacity:0; } 22% { opacity:.65; } 65% { opacity:.75; } 100% { transform:scale(1) rotate(calc(var(--i)*90deg + 40deg)); opacity:0; } }
+@keyframes wideSonarReturn { 0% { transform:scale(1) rotate(calc(var(--i)*90deg + 40deg)); opacity:0; } 22% { opacity:.65; } 65% { opacity:.75; } 100% { transform:scale(.025) rotate(calc(var(--i)*90deg - 35deg)); opacity:0; } }
+.contact-pinging .contact-link,.contact-pong .contact-link { color:#e5bd96; text-shadow:0 0 14px rgba(184,132,83,.65); }
+
+@media(prefers-reduced-motion:reduce) { .sonar-ring { animation:none !important; opacity:0; } }
 </style>
 </head>
 <body>
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div id="sonarFx" aria-hidden="true"></div>
 <main>
 <section class="hero">
     <div class="glass-panel" id="panel">
@@ -96,6 +110,7 @@ body::before{
         <div class="accent-line"></div>
         <div class="contact-terminal">
             <button id="pingTrigger" class="contact-link" type="button" aria-label="Email Triston Ward" disabled>&gt; PING TRISTON</button>
+            <span id="pingStatus" class="sr-only" role="status"></span>
 <noscript><p class="contact-note">Enable JavaScript to use the protected email button.</p></noscript>
         </div>
     </div>
@@ -104,10 +119,79 @@ body::before{
 <script>
 const pingTrigger = document.getElementById("pingTrigger");
 pingTrigger.disabled = false;
-pingTrigger.addEventListener("click", event => {
-    if (!event.isTrusted) return;
+const pingStatus = document.getElementById("pingStatus");
+let contactState = "idle", pingResetTimer = null, launchTimer = null, leftAfterLaunch = false;
+const sonarFx = document.getElementById("sonarFx");
+const PING_DURATION = 4000, PONG_DURATION = 4300;
+function showContactSonar(mode) {
+    sonarFx.replaceChildren();
+    if (motionIsPaused()) return;
+    sonarFx.dataset.mode = mode;
+    const box = pingTrigger.getBoundingClientRect();
+    sonarFx.style.setProperty("--sonar-x", box.left + box.width / 2 + "px");
+    sonarFx.style.setProperty("--sonar-y", box.top + box.height / 2 + "px");
+    sonarFx.style.setProperty("--sonar-size", Math.hypot(innerWidth, innerHeight) * 1.85 + "px");
+    for (let i = 0; i < 4; i++) {
+        const ring = document.createElement("span");
+        ring.className = "sonar-ring";
+        ring.style.setProperty("--i", String(i));
+        sonarFx.appendChild(ring);
+    }
+}
+function resetContact() {
+    contactState = "idle"; leftAfterLaunch = false;
+    sonarFx.replaceChildren();
+    document.body.classList.remove("contact-pinging", "contact-pong");
+    pingTrigger.textContent = "> PING TRISTON";
+    pingTrigger.setAttribute("aria-label", "Email Triston Ward");
+    pingStatus.textContent = "";
+}
+function requestEmail() {
+    contactState = "waiting"; leftAfterLaunch = false;
+    sonarFx.replaceChildren();
+    document.body.classList.remove("contact-pinging", "contact-pong");
+    pingTrigger.textContent = "> OPEN EMAIL";
+    pingTrigger.setAttribute("aria-label", "Try opening your email app again");
+    pingStatus.textContent = "Opening your email app. If nothing opens, click Open email to try again.";
     const recipient = [62,40,59,45,103,61,59,32,58,61,38,39,9,46,36,40,32,37,103,42,38,36].map(value => String.fromCharCode(value ^ 73)).join("");
-    window.location.href = "mailto:" + recipient + "?subject=Inquiry_From_Web";
+    try {
+        window.open("mailto:" + recipient + "?subject=Inquiry_From_Web", "_blank", "noopener,noreferrer");
+    } catch {
+        pingStatus.textContent = "Your browser could not open email. Click Open email to try again.";
+    }
+}
+function markContactDeparture() {
+    if (contactState === "waiting") leftAfterLaunch = true;
+}
+function acknowledgeContactReturn() {
+    if (document.visibilityState === "hidden" || contactState !== "waiting" || !leftAfterLaunch) return;
+    contactState = "pong"; leftAfterLaunch = false;
+    showContactSonar("pong");
+    document.body.classList.add("contact-pong");
+    pingTrigger.textContent = "> PONG!";
+    pingTrigger.setAttribute("aria-label", "Welcome back. Email Triston Ward");
+    pingStatus.textContent = "Welcome back.";
+    clearTimeout(pingResetTimer);
+    pingResetTimer = setTimeout(resetContact, motionIsPaused() ? 1500 : PONG_DURATION);
+}
+pingTrigger.addEventListener("click", event => {
+    if (!event.isTrusted || contactState === "pinging") return;
+    if (contactState === "waiting") { requestEmail(); return; }
+    clearTimeout(pingResetTimer); clearTimeout(launchTimer);
+    contactState = "pinging"; leftAfterLaunch = false;
+    showContactSonar("ping");
+    document.body.classList.remove("contact-pong");
+    document.body.classList.add("contact-pinging");
+    pingTrigger.textContent = "> PING...";
+    pingStatus.textContent = "Preparing to open email.";
+    if (motionIsPaused()) requestEmail();
+    else launchTimer = setTimeout(requestEmail, PING_DURATION);
+});
+window.addEventListener("blur", markContactDeparture);
+window.addEventListener("focus", acknowledgeContactReturn);
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") markContactDeparture();
+    else acknowledgeContactReturn();
 });
 const baseRoles = ["OPERATIONS MANAGEMENT", "SYSTEMS ORCHESTRATION", "OPERATIONAL ARCHITECTURE", "ORGANIZATIONAL ENGINEERING", "TECHNICAL OPERATIONS", "SYSTEMS INTEGRATION", "PROCESS OPTIMIZATION", "PRODUCTION LOGISTICS", "OPERATIONAL INTELLIGENCE", "STRATEGIC EXECUTION", "SYSTEMS LEADERSHIP", "WORKFLOW ENGINEERING", "COMPLEXITY MANAGEMENT", "EXECUTIVE OPERATIONS", "INFRASTRUCTURE STRATEGY", "EXECUTION MANAGEMENT", "STRUCTURAL OPTIMIZATION", "OPERATIONAL ARCHITECT", "SYSTEMS ORCHESTRATOR", "WORKFLOW WIZARD", "FRICTION ELIMINATOR", "PRODUCTION MAESTRO", "TECHNICAL DIRECTOR", "BACKSTAGE COMMANDER", "LIGHTING DESIGNER", "AUDIO ENGINEER", "DIRECTOR OF SPOTLIGHT", "THE LOGISTICS CONDUCTOR", "THE BACKSTAGE CATALYST", "CHIEF MATRIX FIXER", "DIRECTOR OF MAGIC", "CHIEF FLOW OFFICER", "PROCESS NAVIGATOR", "THE STRUCTURAL CATALYST", "PACKET ROUTING ENGINE", "HIGH AVAILABILITY CHIEF", "FAILOVER ARCHITECT", "BANDWIDTH OPTIMIZER", "LATENCY ELIMINATOR", "ROOT ACCESS DIRECTOR", "LOAD BALANCING MAESTRO", "PROTOCOLS ORCHESTRATOR", "CENTRAL PROCESSING BOSS", "BACKBONE INFRASTRUCTURE", "PIPELINE ARCHITECT", "THROUGHPUT MAXIMIZER", "REDUNDANCY SUPERVISOR", "DEPLOYMENT MAESTRO"];
 const MY_NAME_TARGET = " TRISTON WARD "; 
