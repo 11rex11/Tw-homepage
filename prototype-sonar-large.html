@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Triston Ward</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+:root{
+    --bg:#111622;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.08);
+    --text:#f5f7fa;
+    --accent:#b88453;
+    --shadow:0 30px 70px rgba(0,0,0,.5);
+    --transition:cubic-bezier(.22,.61,.36,1);
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html,body{ width:100%; min-height:100%; overflow-x:hidden; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
+#bgCanvas{ position:fixed; inset:0; z-index:0; }
+body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:1;
+    background: radial-gradient(circle at 25% 25%, rgba(184,132,83,.15), transparent 45%),
+                radial-gradient(circle at 75% 75%, rgba(184,132,83,.12), transparent 45%),
+                radial-gradient(circle at center, rgba(255,255,255,.02), transparent 60%);
+}
+.hero{ position:relative; z-index:2; width:100%; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:12px; }
+.glass-panel{
+    position:relative; width: min(96vw, 1150px); text-align:center; padding:65px 24px; border-radius:32px;
+    background:var(--glass); border:1px solid var(--glass-border); backdrop-filter: blur(25px);
+    box-shadow:var(--shadow); transition: transform .5s var(--transition), border-color .5s ease, box-shadow .5s ease;
+}
+.matrix-stack { display: flex; flex-direction: column; gap: 28px; align-items: center; width: 100%; }
+.split-flap-row { display: flex; justify-content: center; width: 100%; }
+#nameRow { gap: 4px; } #roleRow { gap: 3px; } 
+.flap-tick {
+    position: relative; background: #090c10; perspective: 200px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.03);
+}
+.card-segment {
+    position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #0d1117; 
+    font-family: monospace; text-align: center; backface-visibility: hidden;
+}
+#nameRow .flap-tick { width: clamp(16px, 3.2vw, 44px); height: clamp(40px, 7.5vw, 96px); border-radius: 6px; }
+#nameRow .card-segment { color: var(--text); font-size: clamp(1.4rem, 4.5vw, 3.2rem); font-weight: 800; }
+#nameRow .card-top { top: 0; line-height: clamp(40px, 7.5vw, 96px); border-bottom: 2px solid rgba(0,0,0,0.85); }
+#nameRow .card-bottom { bottom: 0; line-height: 0px; }
+#roleRow .flap-tick { width: clamp(8px, 2.3vw, 26px); height: clamp(20px, 5.2vw, 62px); border-radius: 4px; }
+#roleRow .card-segment { color: var(--accent); font-size: clamp(0.7rem, 2.7vw, 2rem); font-weight: 700; }
+#roleRow .card-top { top: 0; line-height: clamp(20px, 5.2vw, 62px); border-bottom: 1.5px solid rgba(0,0,0,0.8); }
+#roleRow .card-bottom { bottom: 0; line-height: 0px; }
+.flap-hinge { position: absolute; left: 0; width: 100%; height: 50%; transform-style: preserve-3d; z-index: 3; top: 0; transform-origin: bottom; }
+.flap-hinge.animate { animation: flipTopCard 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes flipTopCard { 100% { transform: rotateX(-180deg); } }
+.accent-line{ width:140px; height:1px; margin:40px auto 0; background: linear-gradient(90deg, transparent, rgba(184,132,83,.8), transparent); position:relative; overflow:hidden; }
+.accent-line::after{ content:""; position:absolute; top:0; left:-30%; width:30%; height:100%; background:rgba(255,255,255,.8); filter:blur(3px); animation:sweep 5s infinite linear; }
+@keyframes sweep{ to { left:130%; } }
+.contact-terminal { margin-top: 30px; opacity: 0.6; transition: all 0.3s ease; }
+.contact-terminal:hover { opacity: 1; cursor: pointer; text-shadow: 0 0 10px var(--accent); }
+
+.contact-terminal { opacity:1; }
+.contact-link { display:inline-flex; align-items:center; min-height:44px; padding:10px 14px; color:var(--text); font:0.8rem monospace; border-radius:8px; }
+.contact-link { text-decoration:none; letter-spacing:2px; background:none; border:0; cursor:pointer; }
+.contact-note { margin-top:10px; font:0.75rem monospace; }
+.contact-link:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+.contact-pinging .contact-link, .contact-pong .contact-link { color:var(--accent); }
+.contact-pinging .contact-link { animation:contactPulse 1s ease-out; }
+.contact-pong .contact-link { animation:contactPulse 1.5s ease-out; }
+@keyframes contactPulse { 0%,100% { text-shadow:none; } 45% { text-shadow:0 0 16px rgba(184,132,83,.8); } }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.fallback-name { font-size:clamp(1.8rem,6vw,3rem); }
+.fallback-role { margin-top:20px; color:var(--accent); font:1rem monospace; }
+.motion-paused .accent-line::after { animation-play-state:paused; }
+@media (max-width:700px) {
+ .glass-panel { padding:40px 12px; border-radius:24px; }
+ .matrix-stack { gap:20px; }
+ #nameRow { gap:2px; }
+ #nameRow .flap-tick { width:clamp(12px,4.4vw,30px); height:56px; }
+ #nameRow .card-top { line-height:56px; }
+ #nameRow .card-segment { font-size:clamp(1rem,5vw,2rem); }
+ #roleRow { gap:1px; }
+ #roleRow .flap-tick { width:clamp(6px,2.6vw,18px); height:34px; }
+ #roleRow .card-top { line-height:34px; }
+ #roleRow .card-segment { font-size:clamp(0.5rem,2.9vw,1.2rem); }
+}
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+
+
+/* Throwaway prototype: four large, soft sonar waves from the contact control. */
+.contact-terminal { position:relative; }
+#sonarFx { position:fixed; inset:0; overflow:hidden; z-index:3; pointer-events:none; }
+.sonar-ring { position:absolute; left:var(--sonar-x,50vw); top:var(--sonar-y,60vh); width:var(--sonar-size,180vmax); height:var(--sonar-size,180vmax); margin-left:calc(var(--sonar-size,180vmax)/-2); margin-top:calc(var(--sonar-size,180vmax)/-2); border-radius:50%; opacity:0;
+ background:radial-gradient(circle,transparent 57%,rgba(184,132,83,.025) 60%,rgba(208,161,113,.11) 63%,rgba(229,184,139,.38) 65%,rgba(184,132,83,.10) 68%,transparent 73%);
+ mask-image:conic-gradient(from -110deg,transparent 0deg,rgba(0,0,0,.1) 15deg,#000 45deg,#000 145deg,rgba(0,0,0,.1) 175deg,transparent 190deg,transparent 360deg);
+ -webkit-mask-image:conic-gradient(from -110deg,transparent 0deg,rgba(0,0,0,.1) 15deg,#000 45deg,#000 145deg,rgba(0,0,0,.1) 175deg,transparent 190deg,transparent 360deg);
+ animation:wideSonar 3200ms cubic-bezier(.32,.08,.24,1) both; animation-delay:calc(var(--i)*140ms); will-change:transform,opacity; }
+#sonarFx[data-mode=pong] .sonar-ring { animation-name:wideSonarReturn; animation-duration:3500ms; animation-delay:calc(var(--i)*140ms); background:radial-gradient(circle,transparent 58%,rgba(214,175,137,.025) 60%,rgba(233,196,158,.14) 63%,rgba(239,205,173,.35) 65%,rgba(205,160,114,.08) 69%,transparent 73%); }
+@keyframes wideSonar { 0% { transform:scale(.025) rotate(calc(var(--i)*90deg - 35deg)); opacity:0; } 22% { opacity:.65; } 65% { opacity:.75; } 100% { transform:scale(1) rotate(calc(var(--i)*90deg + 40deg)); opacity:0; } }
+@keyframes wideSonarReturn { 0% { transform:scale(1) rotate(calc(var(--i)*90deg + 40deg)); opacity:0; } 22% { opacity:.65; } 65% { opacity:.75; } 100% { transform:scale(.025) rotate(calc(var(--i)*90deg - 35deg)); opacity:0; } }
+.contact-pinging .contact-link,.contact-pong .contact-link { color:#e5bd96; text-shadow:0 0 14px rgba(184,132,83,.65); }
+.prototype-controls { position:fixed; z-index:10; bottom:14px; left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 24px); padding:10px 14px; border:1px solid #657080; border-radius:14px; background:#202839; color:#f5f7fa; text-align:center; }
+.prototype-controls p { font:12px/1.4 system-ui,sans-serif; margin:2px 0 6px; }
+.prototype-switch { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.prototype-switch button { min-height:40px; padding:7px 12px; border:1px solid #647087; border-radius:8px; background:#111622; color:#fff; cursor:pointer; font:13px system-ui,sans-serif; }
+.prototype-switch button:focus-visible { outline:2px solid #b88453; outline-offset:2px; }
+.hero { padding-bottom:130px; }
+@media(prefers-reduced-motion:reduce) { .sonar-ring { animation:none !important; opacity:0; } }
+</style>
+</head>
+<body>
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div id="sonarFx" aria-hidden="true"></div>
+<main>
+<section class="hero">
+    <div class="glass-panel" id="panel">
+        <h1 id="identity" class="fallback-name">Triston Ward</h1>
+<p id="roleSummary" class="fallback-role">Systems, operations, and technical creativity.</p>
+<div class="matrix-stack" aria-hidden="true">
+            <div id="nameRow" class="split-flap-row"></div>
+            <div id="roleRow" class="split-flap-row"></div>
+        </div>
+        <div class="accent-line"></div>
+        <div class="contact-terminal">
+
+            <button id="pingTrigger" class="contact-link" type="button" aria-label="Email Triston Ward" disabled>&gt; PING TRISTON</button>
+            <span id="pingStatus" class="sr-only" role="status"></span>
+<noscript><p class="contact-note">Enable JavaScript to use the protected email button.</p></noscript>
+        </div>
+    </div>
+</section>
+</main>
+<aside class="prototype-controls" aria-label="Large sonar preview">
+<p>Offset rotating arcs · PING outward / PONG inward · no email opens</p>
+<div class="prototype-switch"><button id="replayPing">Replay PING</button><button id="replayPong">Replay PONG</button></div>
+</aside>
+<script>
+const pingTrigger = document.getElementById("pingTrigger");
+pingTrigger.disabled = false;
+const sonarFx = document.getElementById("sonarFx");
+let sonarTimer = null;
+function replaySonar(mode) {
+ clearTimeout(sonarTimer); sonarFx.replaceChildren(); sonarFx.dataset.mode = mode;
+ document.body.classList.remove("contact-pinging","contact-pong");
+ document.body.classList.add(mode === "ping" ? "contact-pinging" : "contact-pong");
+ const box = pingTrigger.getBoundingClientRect();
+ sonarFx.style.setProperty("--sonar-x", box.left + box.width/2 + "px");
+ sonarFx.style.setProperty("--sonar-y", box.top + box.height/2 + "px");
+ sonarFx.style.setProperty("--sonar-size", Math.hypot(innerWidth,innerHeight)*1.85 + "px");
+ pingTrigger.textContent = mode === "ping" ? "> PING..." : "> PONG!";
+ for (let i=0;i<4;i++) {const ring=document.createElement("span");ring.className="sonar-ring";ring.style.setProperty("--i",String(i));sonarFx.appendChild(ring);}
+ sonarTimer=setTimeout(()=>{sonarFx.replaceChildren();document.body.classList.remove("contact-pinging","contact-pong");pingTrigger.textContent="> PING TRISTON";},mode==="ping"?4000:4300);
+}
+pingTrigger.addEventListener("click",()=>replaySonar("ping"));
+document.getElementById("replayPing").addEventListener("click",()=>replaySonar("ping"));
+document.getElementById("replayPong").addEventListener("click",()=>replaySonar("pong"));
+const baseRoles = ["OPERATIONS MANAGEMENT", "SYSTEMS ORCHESTRATION", "OPERATIONAL ARCHITECTURE", "ORGANIZATIONAL ENGINEERING", "TECHNICAL OPERATIONS", "SYSTEMS INTEGRATION", "PROCESS OPTIMIZATION", "PRODUCTION LOGISTICS", "OPERATIONAL INTELLIGENCE", "STRATEGIC EXECUTION", "SYSTEMS LEADERSHIP", "WORKFLOW ENGINEERING", "COMPLEXITY MANAGEMENT", "EXECUTIVE OPERATIONS", "INFRASTRUCTURE STRATEGY", "EXECUTION MANAGEMENT", "STRUCTURAL OPTIMIZATION", "OPERATIONAL ARCHITECT", "SYSTEMS ORCHESTRATOR", "WORKFLOW WIZARD", "FRICTION ELIMINATOR", "PRODUCTION MAESTRO", "TECHNICAL DIRECTOR", "BACKSTAGE COMMANDER", "LIGHTING DESIGNER", "AUDIO ENGINEER", "DIRECTOR OF SPOTLIGHT", "THE LOGISTICS CONDUCTOR", "THE BACKSTAGE CATALYST", "CHIEF MATRIX FIXER", "DIRECTOR OF MAGIC", "CHIEF FLOW OFFICER", "PROCESS NAVIGATOR", "THE STRUCTURAL CATALYST", "PACKET ROUTING ENGINE", "HIGH AVAILABILITY CHIEF", "FAILOVER ARCHITECT", "BANDWIDTH OPTIMIZER", "LATENCY ELIMINATOR", "ROOT ACCESS DIRECTOR", "LOAD BALANCING MAESTRO", "PROTOCOLS ORCHESTRATOR", "CENTRAL PROCESSING BOSS", "BACKBONE INFRASTRUCTURE", "PIPELINE ARCHITECT", "THROUGHPUT MAXIMIZER", "REDUNDANCY SUPERVISOR", "DEPLOYMENT MAESTRO"];
+const MY_NAME_TARGET = " TRISTON WARD "; 
+const nameSlotsCount = 14; const roleSlotsCount = 26; 
+const nameRow = document.getElementById("nameRow"), roleRow = document.getElementById("roleRow");
+let currentNameArray = Array(nameSlotsCount).fill(" "), currentRoleArray = Array(roleSlotsCount).fill(" "), randomizedPlaylist = [], currentPlaylistIndex = 0;
+
+function buildPhysicalMatrix(row, count) {
+    row.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+        let s = document.createElement("div"); s.className = "flap-tick"; s.id = `${row.id}-slot-${i}`;
+        s.innerHTML = `<div class="card-segment card-top">&nbsp;</div><div class="card-segment card-bottom">&nbsp;</div>`;
+        row.appendChild(s);
+    }
+}
+buildPhysicalMatrix(nameRow, nameSlotsCount); buildPhysicalMatrix(roleRow, roleSlotsCount);
+document.getElementById("identity").className = "sr-only";
+document.getElementById("roleSummary").className = "sr-only";
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let sequenceTimer = null, frameId = null;
+const pendingFlips = new Set();
+function scheduleFlip(callback, delay) {
+ const id = setTimeout(() => { pendingFlips.delete(id); callback(); }, delay);
+ pendingFlips.add(id);
+}
+function motionIsPaused() { return reducedMotion.matches; }
+function settleRow(rowId, currentArr) {
+ currentArr.forEach((char, i) => {
+  const slot = document.getElementById(rowId + "-slot-" + i);
+  const text = char === " " ? "&nbsp;" : char;
+  slot.innerHTML = '<div class="card-segment card-top">' + text + '</div><div class="card-segment card-bottom">' + text + '</div>';
+ });
+}
+
+function flipRowToTarget(rowId, targetString, currentArr, limit) {
+    for (let i = 0; i < limit; i++) {
+        let next = targetString.padEnd(limit, " ")[i], prev = currentArr[i];
+        if (prev !== next) {
+            scheduleFlip(() => {
+                let slot = document.getElementById(`${rowId}-slot-${i}`);
+                if (!slot) return;
+                let dn = next === " " ? "&nbsp;" : next, do_ = prev === " " ? "&nbsp;" : prev;
+                slot.innerHTML = `<div class="card-segment card-top">${dn}</div><div class="card-segment card-bottom">${do_}</div><div class="flap-hinge animate"><div class="card-segment card-top">${do_}</div></div>`;
+                scheduleFlip(() => { slot.innerHTML = `<div class="card-segment card-top">${dn}</div><div class="card-segment card-bottom">${dn}</div>`; }, 220);
+            }, i * 30);
+            currentArr[i] = next;
+        }
+    }
+}
+
+function executeMasterSequence() {
+    flipRowToTarget("nameRow", " ".repeat(nameSlotsCount), currentNameArray, nameSlotsCount);
+    flipRowToTarget("roleRow", " ".repeat(roleSlotsCount), currentRoleArray, roleSlotsCount);
+    scheduleFlip(() => flipRowToTarget("nameRow", MY_NAME_TARGET, currentNameArray, nameSlotsCount), 900);
+    scheduleFlip(() => {
+        if (randomizedPlaylist.length === 0 || currentPlaylistIndex >= randomizedPlaylist.length) { randomizedPlaylist = [...baseRoles].sort(() => Math.random() - 0.5); currentPlaylistIndex = 0; }
+        flipRowToTarget("roleRow", (" ".repeat(Math.floor((roleSlotsCount - randomizedPlaylist[currentPlaylistIndex].length)/2)) + randomizedPlaylist[currentPlaylistIndex]).padEnd(roleSlotsCount, " "), currentRoleArray, roleSlotsCount);
+        currentPlaylistIndex++;
+    }, 1800);
+}
+const canvas = document.getElementById("bgCanvas"), ctx = canvas.getContext("2d");
+let w, h, circuitTraces = [], cornerRadius = 12;
+class CircuitTrace {
+    constructor(points, isMainTrunk) {
+        this.rawPoints = points; this.isMainTrunk = isMainTrunk; this.computedPath = []; this.bakeSmoothPath();
+        this.packets = Array.from({length: isMainTrunk ? 2 : 1}, () => ({ progress: Math.random(), baseSpeed: (isMainTrunk ? 0.0024 : 0.0015) + Math.random() * 0.0006, speed: 0.002, size: isMainTrunk ? 2.8 : 1.5, alpha: 0.25 + Math.random() * 0.3 }));
+    }
+    bakeSmoothPath() {
+        this.computedPath.push(this.rawPoints[0]);
+        for (let i = 1; i < this.rawPoints.length - 1; i++) {
+            let p0=this.rawPoints[i-1], p1=this.rawPoints[i], p2=this.rawPoints[i+1], r=cornerRadius;
+            let d1x=p1.x-p0.x, d1y=p1.y-p0.y, d2x=p2.x-p1.x, d2y=p2.y-p1.y;
+            let len1=Math.hypot(d1x,d1y), len2=Math.hypot(d2x,d2y);
+            let n1x=d1x/len1, n1y=d1y/len1, n2x=d2x/len2, n2y=d2y/len2;
+            let cr=Math.min(r, len1/2, len2/2);
+            let t1={x:p1.x-n1x*cr, y:p1.y-n1y*cr}, t2={x:p1.x+n2x*cr, y:p1.y+n2y*cr};
+            this.computedPath.push(t1);
+            for(let s=1; s<8; s++){ let t=s/8; this.computedPath.push({x:(1-t)**2*t1.x+2*(1-t)*t*p1.x+t**2*t2.x, y:(1-t)**2*t1.y+2*(1-t)*t*p1.y+t**2*t2.y}); }
+            this.computedPath.push(t2);
+        }
+        this.computedPath.push(this.rawPoints[this.rawPoints.length-1]);
+    }
+    render(mult) {
+        ctx.beginPath(); ctx.lineWidth=this.isMainTrunk?2.4:1.2; ctx.strokeStyle=this.isMainTrunk?"rgba(255,255,255,.05)":"rgba(255,255,255,.02)";
+        this.computedPath.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y)); ctx.stroke();
+        ctx.strokeStyle = this.isMainTrunk ? "rgba(184,132,83,.45)" : "rgba(255,255,255,.08)";
+        ctx.beginPath(); ctx.arc(this.computedPath[0].x, this.computedPath[0].y, this.isMainTrunk?5:3, 0, Math.PI*2); ctx.stroke();
+        this.packets.forEach(p => {
+            p.speed += (p.baseSpeed*mult-p.speed)*0.05; p.progress=(p.progress+p.speed)%1;
+            let t=p.progress*(this.computedPath.length-1), idx=Math.floor(t), seg=t-idx, p1=this.computedPath[idx], p2=this.computedPath[idx+1];
+            let x=p1.x+(p2.x-p1.x)*seg, y=p1.y+(p2.y-p1.y)*seg;
+            ctx.fillStyle=`rgba(184,132,83,${p.alpha*1.6})`; ctx.beginPath(); ctx.arc(x,y,p.size*1.1,0,Math.PI*2); ctx.fill();
+        });
+    }
+}
+function initTraces() {
+    circuitTraces = []; let box = nameRow.getBoundingClientRect(), isM = w<700, count=isM?24:44, pad=isM?25:60, cx=box.left+box.width/2, hy=box.bottom+14, hw=isM?100:220;
+    for (let i = 0; i < count; i++) {
+        let e=i%4, pct=(Math.floor(i/4)+0.5)/(count/4), sx, sy;
+        if(e===0){ sx=pad+(w-pad*2)*pct; sy=pad; } else if(e===1){ sx=w-pad; sy=pad+(h-pad*2)*pct; } else if(e===2){ sx=pad+(w-pad*2)*pct; sy=h-pad; } else { sx=pad; sy=pad+(h-pad*2)*pct; }
+        let ex=cx-hw/2+hw*pct, pts=[{x:sx,y:sy}];
+        if(e===0||e===2){ pts.push({x:sx,y:sy+(hy-sy)*0.45}, {x:sx+(ex-sx)*0.65,y:sy+(hy-sy)*0.45}, {x:sx+(ex-sx)*0.65,y:sy+(hy-sy)*0.8}, {x:ex,y:sy+(hy-sy)*0.8}); }
+        else { pts.push({x:sx+(ex-sx)*0.45,y:sy}, {x:sx+(ex-sx)*0.45,y:sy+(hy-sy)*0.55}, {x:sx+(ex-sx)*0.8,y:sy+(hy-sy)*0.55}, {x:sx+(ex-sx)*0.8,y:hy}); }
+        pts.push({x:ex, y:hy}); circuitTraces.push(new CircuitTrace(pts, i%5===0));
+    }
+}
+function resize(){ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; initTraces(); }
+window.addEventListener("resize", resize); resize();
+function drawScene(){ ctx.clearRect(0,0,w,h); circuitTraces.forEach(t => t.render(motionIsPaused() ? 0 : 1)); }
+function anim(){ drawScene(); if (!motionIsPaused()) frameId = requestAnimationFrame(anim); }
+function syncMotion() {
+ clearInterval(sequenceTimer);
+ pendingFlips.forEach(id => clearTimeout(id)); pendingFlips.clear();
+ if (frameId !== null) cancelAnimationFrame(frameId);
+ const paused = motionIsPaused();
+ document.body.classList.toggle("motion-paused", paused);
+ if (paused) {
+  currentNameArray = MY_NAME_TARGET.padEnd(nameSlotsCount, " ").split("");
+  if (currentRoleArray.every(char => char === " ")) {
+   const role = baseRoles[0];
+   currentRoleArray = role.padStart(Math.floor((roleSlotsCount + role.length)/2), " ").padEnd(roleSlotsCount, " ").split("");
+  }
+  settleRow("nameRow", currentNameArray); settleRow("roleRow", currentRoleArray); drawScene();
+ } else {
+  executeMasterSequence(); sequenceTimer = setInterval(executeMasterSequence, 6000); anim();
+ }
+}
+reducedMotion.addEventListener("change", syncMotion);
+window.addEventListener("resize", () => { if (motionIsPaused()) drawScene(); });
+syncMotion();
+</script>
+</body>
+</html>
